@@ -27,7 +27,7 @@ def _compute_loss(y, y_hat, V, W):
             tf.multiply(lambda_v, tf.cast(tf.pow(V, 2), tf.float32)))))
 
     error = tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
-    loss = error + l2_norm
+    return error + l2_norm
 
 class Base:
     pass
@@ -102,11 +102,10 @@ class FactorizationMachine(Base):
             for i, (x_, y_) in enumerate(train_dataset):
                 with tf.GradientTape() as tape:
                     y_hat  = _model(tf.cast(x_, tf.float32), V, W, w0)
-                    loss = _compute_loss(y_, y_hat, V, W)
+                    loss = _compute_loss(tf.cast(y_, tf.float32), y_hat, V, W)
 
             grads = tape.gradient(loss, [W, w0])
             optimizer.apply_gradients(zip(grads, [W, w0]))
-
 
     def predict(self, X):
         pass
