@@ -101,11 +101,16 @@ class FactorizationMachine(Base):
         for epoch_count in range(self.epochs):
             for i, (x_, y_) in enumerate(train_dataset):
                 with tf.GradientTape() as tape:
-                    y_hat  = _model(tf.cast(x_, tf.float32), V, W, w0)
+                    y_hat = _model(tf.cast(x_, tf.float32), V, W, w0)
                     loss = _compute_loss(tf.cast(y_, tf.float32), y_hat, V, W)
 
             grads = tape.gradient(loss, [W, w0])
             optimizer.apply_gradients(zip(grads, [W, w0]))
+
+        self.w0 = w0
+        self.W = W
+        self.V = V
+        return self
 
     def predict(self, X):
         pass
