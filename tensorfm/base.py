@@ -14,7 +14,6 @@ def _model(X, V, W, w0):
                                         tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(V, 2)))),
                                     1, keepdims=True)))
 
-    # his is the model
     return linear_terms + tf.cast(interactions, tf.float32)
 
 def _compute_loss(y, y_hat, V, W):
@@ -49,68 +48,39 @@ class FactorizationMachine(Base):
         Penalty parameter C of the error term.
 
     """
-    def __init__(self, k=5, epochs=100, penalty='l2', C=10e-5, loss=None):
+    def __init__(self, train_dataset, k=5, epochs=100, eta=0.1, penalty='l2', C=10e-5, loss=None):
         self.k = k
         self.epochs = epochs
         self.penalty = penalty
         self.C = C
         self.loss = loss
 
+        # Get the number of feature columns
+        p = train_dataset.element_spec[0].shape[1]
+        self.train_dataset = train_dataset
+        # bias and weights
+        self.w0 = tf.Variable(tf.zeros([1]))
+        self.W = tf.Variable(tf.zeros([p]))
+
+        # interaction factors, randomly initialized
+        self.V = tf.Variable(tf.random.normal([self.k, p], stddev=0.01, dtype=tf.dtypes.float32))
+        self.optimizer = tf.keras.optimizers.Adagrad(learning_rate=tf.constant(eta))
 
     def _session_run(self,  X, y):
         pass
 
 
-    def fit(self, X, y):
-        """Fit the model according to the given training data.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
-        y : array-like, shape = [n_samples]
-            Target vector relative to X
-        Returns
-        -------
-        self : object
-        """
-        k = self.k
-
-        n, p = X.shape
-        # bias and weights
-        w0 = tf.Variable(tf.zeros([1]))
-        W = tf.Variable(tf.zeros([p]))
-
-        # interaction factors, randomly initialized
-        V = tf.Variable(tf.random.normal([k, p], stddev=0.01, dtype=tf.dtypes.float32))
-
-
-        # estimate of y, initialized to 0.
-        y_hat = tf.Variable(tf.zeros([n, 1]))
-
-        eta = tf.constant(0.1)
-        optimizer = tf.keras.optimizers.Adagrad(learning_rate=eta)
-
-        train_dataset = (
-            tf.data.Dataset.from_tensor_slices((tf.reshape(X, [-1, X.shape[1]]), y))
-                .batch(200)
-                .shuffle(1000)
-        )
-
+    def fit(self):
+        y_hat = None
         for epoch_count in range(self.epochs):
-            for i, (x_, y_) in enumerate(train_dataset):
+            for (x_, y_) in self.train_dataset:
                 with tf.GradientTape() as tape:
-                    y_hat = _model(tf.cast(x_, tf.float32), V, W, w0)
-                    loss = _compute_loss(tf.cast(y_, tf.float32), y_hat, V, W)
-
-            grads = tape.gradient(loss, [W, w0])
-            optimizer.apply_gradients(zip(grads, [W, w0]))
-
-        self.w0 = w0
-        self.W = W
-        self.V = V
+                    y_hat = _model(tf.cast(x_, tf.float32), self.V, self.W, self.w0)
+                    loss = _compute_loss(tf.cast(y_, tf.float32), y_hat, self.V, self.W)
+                # Update gradients
+                grads = tape.gradient(loss, [self.W, self.w0])
+                self.optimizer.apply_gradients(zip(grads, [self.W, self.w0]))
         return self
 
     def predict(self, X):
-        pass
+        return _model(X, self.V, self.W, self.w0)

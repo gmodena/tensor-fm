@@ -1,4 +1,5 @@
 import pytest
+import tensorflow as tf
 from tensorfm.base import FactorizationMachine
 
 import numpy as np
@@ -21,5 +22,11 @@ y_data.shape += (1, )
 
 
 def test_base_fit():
-    model = FactorizationMachine()
-    model.fit(x_data, y_data)
+    train_dataset = (
+        tf.data.Dataset.from_tensor_slices((tf.reshape(x_data, [-1, x_data.shape[1]]), y_data))
+            .batch(200)
+            .shuffle(1000)
+    )
+
+    model = FactorizationMachine(train_dataset)
+    model.fit()
