@@ -56,13 +56,9 @@ class FactorizationMachine(Base):
         self.optimizer = tf.keras.optimizers.Adagrad(learning_rate=tf.constant(eta))
 
     def model(self, X):
-        linear_terms = None
-        if X.shape[0] > 1:
-            linear_terms = tf.add(self.w0,
+        linear_terms = tf.add(self.w0,
                               tf.reduce_sum(
                                   tf.multiply(self.W, X), 1, keepdims=True))
-        else:
-            linear_terms = self.w0 + self.W * X
 
         interactions = (tf.multiply(0.5,
                                     tf.reduce_sum(
@@ -71,18 +67,19 @@ class FactorizationMachine(Base):
                                             tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(self.V, 2)))),
                                         1, keepdims=True)))
 
-        return linear_terms + tf.cast(interactions, tf.float32)
+        return tf.add(linear_terms, tf.cast(interactions, tf.float32))
 
     def fit(self):
         for epoch_count in range(self.epochs):
-            for (x_, y_) in self.train_dataset:
+            for i, (x_, y_) in enumerate(self.train_dataset):
                 with tf.GradientTape() as tape:
                     pred = self.model(tf.cast(x_, tf.float32))
+                    print(epoch_count, pred)
                     loss = _l2_loss(tf.cast(y_, tf.float32), pred, self.V, self.W)
                 # Update gradients
                 grads = tape.gradient(loss, [self.W, self.w0])
                 self.optimizer.apply_gradients(zip(grads, [self.W, self.w0]))
-        return self
+        return pred
 
     def predict(self, X):
         return self.model(X)
