@@ -6,7 +6,7 @@ import numpy as np
 
 
 # Example dummy data from Rendle 2010
-x_data = np.matrix([
+x_data = np.array([
     #     Users  |     Movies     |    Movie Ratings   | Time | Last Movies Rated
     #    A  B  C | TI  NH  SW  ST | TI   NH   SW   ST  |      | TI  NH  SW  ST
     [1, 0, 0,  1,  0,  0,  0,   0.3, 0.3, 0.3, 0,     13,   0,  0,  0,  0 ],
@@ -30,3 +30,7 @@ def test_base_fit():
 
     model = FactorizationMachine(train_dataset)
     model.fit()
+    print(model.predict(tf.cast(np.array([
+        #     Users  |     Movies     |    Movie Ratings   | Time | Last Movies Rated
+        #    A  B  C | TI  NH  SW  ST | TI   NH   SW   ST  |      | TI  NH  SW  ST
+        [1, 0, 0,  1,  0,  0,  0,   0.3, 0.3, 0.3, 0,     13,   0,  0,  0,  0 ]]), tf.float32)))

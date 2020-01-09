@@ -2,21 +2,9 @@ import tensorflow as tf
 
 
 
-def _model(X, V, W, w0):
-    linear_terms = tf.add(w0,
-                          tf.reduce_sum(
-                              tf.multiply(W, X), 1, keepdims=True))
 
-    interactions = (tf.multiply(0.5,
-                                tf.reduce_sum(
-                                    tf.subtract(
-                                        tf.pow( tf.matmul(X, tf.transpose(V)), 2),
-                                        tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(V, 2)))),
-                                    1, keepdims=True)))
 
-    return linear_terms + tf.cast(interactions, tf.float32)
-
-def _compute_loss(y, y_hat, V, W):
+def _l2_loss(y, y_hat, V, W):
     lambda_w = tf.constant(0.001, name='lambda_w')
     lambda_v = tf.constant(0.001, name='lambda_v')
 
@@ -58,6 +46,7 @@ class FactorizationMachine(Base):
         # Get the number of feature columns
         p = train_dataset.element_spec[0].shape[1]
         self.train_dataset = train_dataset
+
         # bias and weights
         self.w0 = tf.Variable(tf.zeros([1]))
         self.W = tf.Variable(tf.zeros([p]))
@@ -66,21 +55,34 @@ class FactorizationMachine(Base):
         self.V = tf.Variable(tf.random.normal([self.k, p], stddev=0.01, dtype=tf.dtypes.float32))
         self.optimizer = tf.keras.optimizers.Adagrad(learning_rate=tf.constant(eta))
 
-    def _session_run(self,  X, y):
-        pass
+    def model(self, X):
+        linear_terms = None
+        if X.shape[0] > 1:
+            linear_terms = tf.add(self.w0,
+                              tf.reduce_sum(
+                                  tf.multiply(self.W, X), 1, keepdims=True))
+        else:
+            linear_terms = self.w0 + self.W * X
 
+        interactions = (tf.multiply(0.5,
+                                    tf.reduce_sum(
+                                        tf.subtract(
+                                            tf.pow( tf.matmul(X, tf.transpose(self.V)), 2),
+                                            tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(self.V, 2)))),
+                                        1, keepdims=True)))
+
+        return linear_terms + tf.cast(interactions, tf.float32)
 
     def fit(self):
-        y_hat = None
         for epoch_count in range(self.epochs):
             for (x_, y_) in self.train_dataset:
                 with tf.GradientTape() as tape:
-                    y_hat = _model(tf.cast(x_, tf.float32), self.V, self.W, self.w0)
-                    loss = _compute_loss(tf.cast(y_, tf.float32), y_hat, self.V, self.W)
+                    pred = self.model(tf.cast(x_, tf.float32))
+                    loss = _l2_loss(tf.cast(y_, tf.float32), pred, self.V, self.W)
                 # Update gradients
                 grads = tape.gradient(loss, [self.W, self.w0])
                 self.optimizer.apply_gradients(zip(grads, [self.W, self.w0]))
         return self
 
     def predict(self, X):
-        return _model(X, self.V, self.W, self.w0)
+        return self.model(X)
