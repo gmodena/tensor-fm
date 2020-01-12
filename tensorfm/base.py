@@ -1,8 +1,17 @@
 import tensorflow as tf
 
 
+def _l1_loss(y, y_hat, V, W):
+    lambda_w = tf.constant(0.001, name='lambda_w')
+    lambda_v = tf.constant(0.001, name='lambda_v')
 
+    l1_norm = (tf.reduce_sum(
+        tf.add(
+            tf.multiply(lambda_w, tf.cast(tf.abs(W, 2), tf.float32)),
+            tf.multiply(lambda_v, tf.cast(tf.abs(V, 2), tf.float32)))))
 
+    error = tf.reduce_mean(tf.abs(tf.subtract(y, y_hat)))
+    return error + l1_norm
 
 def _l2_loss(y, y_hat, V, W):
     lambda_w = tf.constant(0.001, name='lambda_w')
@@ -16,10 +25,7 @@ def _l2_loss(y, y_hat, V, W):
     error = tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
     return error + l2_norm
 
-class Base:
-    pass
-
-class FactorizationMachine(Base):
+class BaseFactorizationMachine:
     """
     Base class for factorization machines.
 
@@ -36,12 +42,11 @@ class FactorizationMachine(Base):
         Penalty parameter C of the error term.
 
     """
-    def __init__(self, train_dataset, k=5, epochs=100, eta=0.1, penalty='l2', C=10e-5, loss=None):
+    def __init__(self, train_dataset, k=5, epochs=100, optimizer=None, loss=None):
         self.k = k
         self.epochs = epochs
-        self.penalty = penalty
-        self.C = C
         self.loss = loss
+        self.optimizer = optimizer
 
         # Get the number of feature columns
         p = train_dataset.element_spec[0].shape[1]
@@ -53,7 +58,13 @@ class FactorizationMachine(Base):
 
         # interaction factors, randomly initialized
         self.V = tf.Variable(tf.random.normal([self.k, p], stddev=0.01, dtype=tf.dtypes.float32))
-        self.optimizer = tf.keras.optimizers.Adagrad(learning_rate=tf.constant(eta))
+
+
+    def _validate_params(self):
+        if self.epochs < 1:
+            raise ValueError("epoch must be > 0")
+        if self.k < 1:
+            raise ValueError("k must be > 0")
 
     def model(self, X):
         linear_terms = tf.add(self.w0,
@@ -70,6 +81,7 @@ class FactorizationMachine(Base):
         return tf.add(linear_terms, tf.cast(interactions, tf.float32))
 
     def fit(self):
+        self._validate_params()
         for epoch_count in range(self.epochs):
             for i, (x_, y_) in enumerate(self.train_dataset):
                 with tf.GradientTape() as tape:
@@ -79,7 +91,7 @@ class FactorizationMachine(Base):
                 # Update gradients
                 grads = tape.gradient(loss, [self.W, self.w0])
                 self.optimizer.apply_gradients(zip(grads, [self.W, self.w0]))
-        return pred
+        return self
 
     def predict(self, X):
         return self.model(X)
