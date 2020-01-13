@@ -17,6 +17,7 @@ def check_X_y(X, y, dtype=tf.float32):
 def check_X(X, dtype=tf.float32):
     return tf.cast(X, dtype=dtype)
 
+
 def mse(y, y_hat):
     return tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
 
@@ -73,16 +74,32 @@ class FactorizationMachine:
             raise ValueError("k must be > 0")
 
     def model(self, X):
-        linear_terms = tf.add(self.w0_,
-                              tf.reduce_sum(
-                                  tf.multiply(self.W_, X), 1, keepdims=True))
 
-        interactions = (tf.multiply(0.5,
-                                    tf.reduce_sum(
+        if X.ndim > 1:
+            linear_terms = tf.add(self.w0_,
+                                  tf.reduce_sum(
+                                      tf.multiply(self.W_, X), 1, keepdims=True))
+
+            interactions = (tf.multiply(0.5,
+                                        tf.reduce_sum(
+                                            tf.subtract(
+                                                tf.pow(tf.matmul(X, tf.transpose(self.V_)), 2),
+                                                tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(self.V_, 2)))),
+                                            1, keepdims=True)))
+        else:
+            linear_terms = tf.add(self.w0_, tf.tensordot(X, tf.transpose(self.W_), 1))
+
+
+            interactions = (tf.multiply(0.5,
+                                        tf.reduce_sum(
                                         tf.subtract(
-                                            tf.pow(tf.matmul(X, tf.transpose(self.V_)), 2),
-                                            tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(self.V_, 2)))),
-                                        1, keepdims=True)))
+                                            tf.pow(tf.tensordot(X, tf.transpose(self.V_), 1), 2),
+                                            tf.tensordot(tf.pow(X, 2), tf.transpose(tf.pow(self.V_, 2)), 1 )))))
+
+
+
+
+
         return tf.add(linear_terms, tf.cast(interactions, tf.float32))
 
     def fit(self):

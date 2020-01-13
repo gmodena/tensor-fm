@@ -36,8 +36,9 @@ def test_base_fit():
     assert r.shape == [x_data.shape[0], 1]
 
     # predict single instance
-    # pred = model.predict(tf.cast(x_data[0], tf.float32))
-    # assert pred.shape == [1, 1]
+    x = check_X(x_data[0])
+    pred = model.predict(x)
+    assert pred.shape == [1, ]
 
 
 def test_sklearn_classifier():
@@ -46,6 +47,5 @@ def test_sklearn_classifier():
     assert clf is not None
 
     clf.fit(x_data, y_data)
-
     pred = clf.predict(x_data)
 
