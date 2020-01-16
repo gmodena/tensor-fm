@@ -10,6 +10,7 @@ logger.setLevel(logging.INFO)
 # Borrowed from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/__init__.py
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""
+    import tensorflow as tf
     import os
     import numpy as np
     import random
@@ -22,3 +23,5 @@ def setup_module(module):
     print("I: Seeding RNGs with %r" % _random_seed)
     np.random.seed(_random_seed)
     random.seed(_random_seed)
+    tf.random.set_seed(_random_seed)
+

@@ -3,31 +3,75 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 
 """
 from .base import FactorizationMachine
-from .base import _l2_loss, _l1_loss, check_X_y, check_X
-from sklearn.base import BaseEstimator, RegressorMixin
+from .base import l2_norm, l1_norm, to_tf_shuffled_dataset, to_tf_dataset_X
+from sklearn import utils
+from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils.validation import check_is_fitted
-import tensorflow as tf
+from tensorflow.keras.losses import MSE, binary_crossentropy
 
-class FactorizationMachineClassifier(BaseEstimator, RegressorMixin):
-    def __init__(self, n_factors=5, max_iter=100, eta=0.01, penalty='l2'):
+
+from sklearn.utils.validation import (
+    check_is_fitted,
+    check_array,
+    FLOAT_DTYPES,
+    column_or_1d,
+)
+
+import tensorflow as tf
+import numpy as np
+
+class BaseFactorizationMachine(BaseEstimator):
+    """Base class for factorization machine regressor and classifier"""
+    def __init__(self, n_factors=2, max_iter=500, eta=0.01, penalty='l2', C=1.0, random_state=None):
         """Factorization machine for regularized regression
 
         :param n_factors: number of latent factor vectors
         :param max_iter: iterations to convergence
         :param eta: learning rate for adaptive optimizer
-        :param penalty: regularization (l1, l2)
+        :param penalty: regularization (l1, l2). Default l2.
         """
         self.n_factors = n_factors
         self.max_iter = max_iter
+        self.C = C
         if penalty not in ('l1', 'l2'):
             raise ValueError(f"penalty must be l1 or l2")
         self.penalty = penalty
-        self.loss = _l2_loss if penalty == 'l2' else _l1_loss
-        if eta <= 0:
-            raise ValueError(f"learning rate eta must be > 0")
+        self.penalty_function = l2_norm if penalty == 'l2' else l1_norm
+        self.loss = MSE
         self.eta = eta
-        self.optimizer = tf.keras.optimizers.Adagrad(learning_rate=tf.constant(eta))
+        self.C = C
+        self.random_state = random_state
         self.fm = None
+
+class FactorizationMachineRegressor(BaseEstimator, RegressorMixin):
+    def __init__(self, n_factors=2, max_iter=500, eta=0.01, penalty='l2', C=1.0, random_state=None):
+        """Factorization machine for regularized regression
+
+        :param n_factors: number of latent factor vectors
+        :param max_iter: iterations to convergence
+        :param eta: learning rate for adaptive optimizer
+        :param penalty: regularization (l1, l2). Default l2.
+        """
+        self.n_factors = n_factors
+        self.max_iter = max_iter
+        self.C = C
+        if penalty not in ('l1', 'l2'):
+            raise ValueError(f"penalty must be l1 or l2")
+        self.penalty = penalty
+        self.penalty_function = l2_norm if penalty == 'l2' else l1_norm
+        self.loss = MSE
+        self.eta = eta
+        self.C = C
+        self.random_state = random_state
+        self.fm = None
+
+
+    def _more_tags(self):
+        tags = super()._more_tags()
+        tags['poor_score'] = True
+
+        return tags
 
     def fit(self, X, y):
         """Fit a factorization machine model
@@ -40,13 +84,26 @@ class FactorizationMachineClassifier(BaseEstimator, RegressorMixin):
             Target values.
         :return: an instance of self.
         """
-        train_dataset = check_X_y(X, y)
-        self.fm = FactorizationMachine(train_dataset,
-                                       k=self.n_factors,
-                                       epochs=self.max_iter,
+        X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
+        column_or_1d(y)
+
+        train_dataset = to_tf_shuffled_dataset(X, y)
+        #tf.random.set_seed(self.random_state)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)
+        self.fm = FactorizationMachine(num_factors=self.n_factors,
+                                       max_iter=self.max_iter,
                                        optimizer=self.optimizer,
-                                       loss=self.loss)
-        self.fm.fit()
+                                       loss=self.loss,
+                                       C=self.C,
+                                       penalty=self.penalty_function,
+                                       random_state=self.random_state)
+
+        self.fm.fit(train_dataset)
+        # Fitted Atributes
+        self.w0_ = self.fm.w0_
+        self.W_ = self.fm.W_
+        self.V_ = self.fm.V_
+
         return self
 
     def predict(self, X):
@@ -57,12 +114,100 @@ class FactorizationMachineClassifier(BaseEstimator, RegressorMixin):
                     with shape (n_samples, n_features)
         :return y: array, shape (n_samples,)
         """
-        # TODO(gmodena, 2020-01-12): we should look at something like sklearn.utils.validation.check_is_fitted
-        if not self.fm:
-            raise ValueError('Estimator not fitted')
-        X = check_X(X)
-        pred = self.fm.predict(X)
-        # TODO(gmodena, 2020-01-12): convert back to ndarray
-        return pred.numpy
+        check_is_fitted(self)
+        X = to_tf_dataset_X(X)
+        pred = self.fm.predict(X).numpy()
+        pred = column_or_1d(pred, warn=True)
+
+        return pred
 
 
+class FactorizationMachineClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, n_factors=5, max_iter=100, eta=0.01, penalty='l2', C=1.0, random_state=None):
+        """Factorization machine for regularized regression
+
+        :param n_factors: number of latent factor vectors
+        :param max_iter: iterations to convergence
+        :param eta: learning rate for adaptive optimizer
+        """
+        self.n_factors = n_factors
+        self.max_iter = max_iter
+        if penalty not in ('l1', 'l2'):
+            raise ValueError(f"penalty must be l1 or l2")
+        self.penalty = penalty
+        self.penalty_function = l2_norm if penalty == 'l2' else l1_norm
+        self.C = C
+        self.loss = binary_crossentropy
+        self.eta = eta
+        self.random_state = random_state
+
+    def fit(self, X, y):
+            """Fit a factorization machine model
+
+            Internally, X and y are converted to to ShuffleDataset with types (float32, float32)
+
+            :param X: {array-like, sparse matrix} of shape (n_samples, n_features)
+                Training data.
+            :param y: array-like of shape (n_samples,) or (n_samples, n_targets)
+                Target values.
+            :return: an instance of self.
+            """
+            X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
+            column_or_1d(y)
+            self.label_binarizer = LabelBinarizer().fit(y)
+            y = self.label_binarizer.transform(y)
+
+
+            train_dataset = to_tf_shuffled_dataset(X, y)
+            self.classes_ = self.label_binarizer.classes_
+
+            self.optimizer = tf.keras.optimizers.Adam(learning_rate=tf.constant(self.eta))
+            self.fm = FactorizationMachine(num_factors=self.n_factors,
+                                           max_iter=self.max_iter,
+                                           optimizer=self.optimizer,
+                                           loss=self.loss,
+                                           penalty=self.penalty_function,
+                                           activation=tf.nn.sigmoid, # logit binary classification
+                                           loss_kwargs={'from_logits': True},
+                                           random_state=self.random_state)
+            self.fm.fit(train_dataset)
+
+            self.w0_ = self.fm.w0_
+            self.W_ = self.fm.W_
+            self.V = self.fm.V_
+            return self
+
+    def _get_proba(self, X):
+        """
+
+        :param X:
+        :return:
+        """
+        check_is_fitted(self)
+        X = to_tf_dataset_X(X)
+        try:
+            pred = self.fm.predict(X)
+        except:
+            raise ValueError("fixme")
+        return pred
+
+    def get_proba(self, X):
+        return self._get_proba(X).numpy()
+
+    def predict(self, X):
+        """Predict using a factorization machine model
+
+        :param X: array-like or sparse matrix, shape (n_samples, n_features).
+                    The input samples. Internally, it will be converted to a float32 Tensor
+                    with shape (n_samples, n_features)
+        :return y: array, shape (n_samples,)
+        """
+        pred = self._get_proba(X).numpy() > 0.5
+
+        return self.label_binarizer.inverse_transform(pred)
+
+
+    def _more_tags(self):
+        tags = super()._more_tags()
+        tags['binary_only'] = True
+        return tags
