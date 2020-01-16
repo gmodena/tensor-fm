@@ -2,7 +2,7 @@
 Custom scikit-learn estimators for supervised learning with Factorization Machines
 
 """
-from .base import FactorizationMachine
+from .base import fit_2d_fm, model
 from .base import l2_norm, l1_norm, to_tf_shuffled_dataset, to_tf_dataset_X
 from sklearn import utils
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
@@ -42,7 +42,6 @@ class BaseFactorizationMachine(BaseEstimator):
         self.eta = eta
         self.C = C
         self.random_state = random_state
-        self.fm = None
 
 class FactorizationMachineRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, n_factors=2, max_iter=500, eta=0.01, penalty='l2', C=1.0, random_state=None):
@@ -64,7 +63,6 @@ class FactorizationMachineRegressor(BaseEstimator, RegressorMixin):
         self.eta = eta
         self.C = C
         self.random_state = random_state
-        self.fm = None
 
 
     def _more_tags(self):
@@ -90,19 +88,13 @@ class FactorizationMachineRegressor(BaseEstimator, RegressorMixin):
         train_dataset = to_tf_shuffled_dataset(X, y)
         #tf.random.set_seed(self.random_state)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)
-        self.fm = FactorizationMachine(num_factors=self.n_factors,
+        self.w0_, self.W_, self.V_ = fit_2d_fm(train_dataset, num_factors=self.n_factors,
                                        max_iter=self.max_iter,
                                        optimizer=self.optimizer,
                                        loss=self.loss,
                                        C=self.C,
                                        penalty=self.penalty_function,
                                        random_state=self.random_state)
-
-        self.fm.fit(train_dataset)
-        # Fitted Atributes
-        self.w0_ = self.fm.w0_
-        self.W_ = self.fm.W_
-        self.V_ = self.fm.V_
 
         return self
 
@@ -116,7 +108,7 @@ class FactorizationMachineRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self)
         X = to_tf_dataset_X(X)
-        pred = self.fm.predict(X).numpy()
+        pred = model(X, self.w0_, self.W_, self.V_).numpy()
         pred = column_or_1d(pred, warn=True)
 
         return pred
@@ -162,19 +154,15 @@ class FactorizationMachineClassifier(BaseEstimator, ClassifierMixin):
             self.classes_ = self.label_binarizer.classes_
 
             self.optimizer = tf.keras.optimizers.Adam(learning_rate=tf.constant(self.eta))
-            self.fm = FactorizationMachine(num_factors=self.n_factors,
-                                           max_iter=self.max_iter,
-                                           optimizer=self.optimizer,
-                                           loss=self.loss,
-                                           penalty=self.penalty_function,
-                                           activation=tf.nn.sigmoid, # logit binary classification
-                                           loss_kwargs={'from_logits': True},
-                                           random_state=self.random_state)
-            self.fm.fit(train_dataset)
-
-            self.w0_ = self.fm.w0_
-            self.W_ = self.fm.W_
-            self.V = self.fm.V_
+            self.w0_, self.W_, self.V_ = fit_2d_fm(train_dataset,
+                                                   num_factors=self.n_factors,
+                                                   max_iter=self.max_iter,
+                                                   optimizer=self.optimizer,
+                                                   loss=self.loss,
+                                                   penalty=self.penalty_function,
+                                                   activation=tf.nn.sigmoid, # logit binary classification
+                                                   loss_kwargs={'from_logits': True},
+                                                   random_state=self.random_state)
             return self
 
     def _get_proba(self, X):
@@ -186,7 +174,7 @@ class FactorizationMachineClassifier(BaseEstimator, ClassifierMixin):
         check_is_fitted(self)
         X = to_tf_dataset_X(X)
         try:
-            pred = self.fm.predict(X)
+            pred = model(X, self.w0_, self.W_, self.V_)
         except:
             raise ValueError("fixme")
         return pred
