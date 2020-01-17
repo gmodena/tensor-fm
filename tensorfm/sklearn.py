@@ -23,7 +23,9 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES,
     column_or_1d,
 )
+from functools import partial
 
+from tensorflow.python.framework.errors_impl import InvalidArgumentError as TensoFlowInvalidArgumentError
 import tensorflow as tf
 import numpy as np
 
@@ -152,8 +154,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             C=C,
             random_state=random_state,
         )
-        self.loss = binary_crossentropy
-        self.activation = tf.nn.sigmoid
+        self.loss = partial(binary_crossentropy, from_logits=True)
 
     def fit(self, X, y):
         """Fit a factorization machine binary classifier
@@ -181,8 +182,6 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             optimizer=self.optimizer,
             loss=self.loss,
             penalty=self.penalty_function,
-            activation=self.activation,
-            loss_kwargs={"from_logits": True},
             random_state=self.random_state,
         )
         return self
@@ -192,10 +191,10 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
         X = utils.check_array(X)
         X = to_tf_tensor(X)
         try:
-            pred = self.activation(fm(X, self.w0_, self.W_, self.V_))
-        except:
-            raise ValueError()
-        column_or_1d(pred.numpy(), warn=True)
+            pred = tf.nn.sigmoid(fm(X, self.w0_, self.W_, self.V_))
+        except TensoFlowInvalidArgumentError as e:
+            # Re-raise a sklearn friendly exception type
+            raise ValueError(str(e))
         return pred
 
     def predict(self, X, threshold=0.5):

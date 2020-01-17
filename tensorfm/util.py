@@ -29,14 +29,3 @@ def to_tf_tensor(X, dtype=tf.float32):
     X = np.array(X)
     return tf.cast(X, dtype=dtype)
 
-
-def check_loss(loss, penalty):
-    if not loss:
-        raise ValueError(
-            f"must specify a loss function. Either tensorflow.keras.losses.MSE"
-            f"or tensorflow.keras.losses.binary_crossentropy are supported"
-        )
-    if loss.__name__ not in ("mean_squared_error", "binary_crossentropy"):
-        raise ValueError(f"{loss.__name__} function not supported")
-    if penalty and penalty.__name__ not in ("l1_norm", "l2_norm"):
-        raise ValueError(f"{penalty.__name__} not supported")

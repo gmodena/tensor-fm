@@ -1,6 +1,4 @@
 import tensorflow as tf
-from .util import check_loss
-
 
 def l1_norm(V, W, lambda_=0.001):
     l1_norm = tf.reduce_sum(
@@ -43,8 +41,6 @@ def train(
     C=1.0,
     loss=None,
     optimizer=None,
-    activation=None,
-    loss_kwargs={},
     random_state=None,
     dtype=tf.float32,
 ):
@@ -52,7 +48,6 @@ def train(
        This class contains the generic code for training a FM. Regressors and classifiers can be learnt
        by minimizing appropriate loss functions (e.g. MSE or cross entropy)."""
     tf.random.set_seed(random_state)
-    check_loss(loss, penalty)
     if C < 0:
         raise ValueError(f"Inverse regularization term must be positive; got (C={C})")
     if max_iter < 1:
@@ -74,9 +69,7 @@ def train(
         for (x, y) in train_dataset:
             with tf.GradientTape() as tape:
                 pred = fm(x, w0, W, V)
-                if activation:
-                    pred = activation(pred)
-                loss_ = loss(y, pred, **loss_kwargs)
+                loss_ = loss(y, pred)
                 if penalty:
                     loss_ += penalty(V, W, lambda_=1.0 / C)
 
