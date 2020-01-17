@@ -3,17 +3,15 @@ import tensorflow as tf
 
 
 def l1_norm(V, W, lambda_=0.001):
-    l1_norm = tf.reduce_sum(
+    return tf.reduce_sum(
         tf.add(tf.multiply(lambda_, tf.abs(W)), tf.multiply(lambda_, tf.abs(V)))
     )
-    return l1_norm
 
 
 def l2_norm(V, W, lambda_=0.001):
-    l2_norm = tf.reduce_sum(
+    return tf.reduce_sum(
         tf.add(tf.multiply(lambda_, tf.pow(W, 2)), tf.multiply(lambda_, tf.pow(V, 2)))
     )
-    return l2_norm
 
 
 def noop_norm(V, W, lambda_=None):
