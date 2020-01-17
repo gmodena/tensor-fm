@@ -50,7 +50,6 @@ class BaseFactorizationMachine(BaseEstimator):
         """
         self.n_factors = n_factors
         self.max_iter = max_iter
-        self.C = C
         if penalty and penalty not in ("l1", "l2"):
             raise ValueError(f"penalty must be l1, l2 or None")
         self.penalty = penalty
