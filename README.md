@@ -40,4 +40,6 @@ of iterations.
 ## Performance
 
 All parameters and settings being equal, I noticed a considerable performance degradation (MSE on train/test)
-on movielens compared to the tensorflow 1 implementation from http://nowave.it/factorization-machines-with-tensorflow.html
+on movielens compared to the tensorflow 1 implementation from http://nowave.it/factorization-machines-with-tensorflow.html.
+Possibly related, a test in the `check_regressors_train` suite (`sklearn`) fails due to a low `R^2`. As a workaround
+`FactorizationMachineRegressor` sets the `poor_score` tag to `True`.

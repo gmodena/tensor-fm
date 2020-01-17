@@ -4,7 +4,7 @@ from sklearn.feature_extraction import DictVectorizer
 import numpy as np
 
 # Read in data
-def load_data(filename, path="ml-100k/"):
+def load_data(filename, path="/Users/gmodena/Downloads/ml-100k/"):
     data = []
     y = []
     users=set()
@@ -28,7 +28,7 @@ X_test = v.transform(test_data)
 
 y_train.shape += (1,)
 
-fm = FactorizationMachineRegressor(max_iter=10, n_factors=20, eta=0.01, C=10000, random_state=12345)
+fm = FactorizationMachineRegressor(max_iter=10, n_factors=20, eta=0.01, C=10000, random_state=12345, penalty='l1')
 fm.fit(X_train.todense(), y_train)
 y_pred = fm.predict(X_test.todense())
 print("MSE test ", mean_squared_error(y_test, y_pred))
