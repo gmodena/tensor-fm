@@ -3,7 +3,7 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 
 """
 from .base import train, fm
-from .base import l2_norm, l1_norm, to_tf_shuffled_dataset, to_tf_dataset_X
+from .base import l2_norm, l1_norm, to_tf_dataset, to_tf_dataset_X, TF_DATASET_BATCH_SIZE
 from sklearn import utils
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
@@ -22,7 +22,8 @@ import tensorflow as tf
 
 
 class BaseFactorizationMachine(BaseEstimator):
-    def __init__(self, n_factors=2, max_iter=100, eta=0.001, penalty='l2', C=1.0, random_state=None):
+    def __init__(self, n_factors=2, max_iter=10, eta=0.001, penalty='l2', C=1.0, batch_size=TF_DATASET_BATCH_SIZE,
+                 random_state=None):
         """Factorization machine for regularized regression
 
         :param n_factors: number of latent factor vectors
@@ -30,6 +31,7 @@ class BaseFactorizationMachine(BaseEstimator):
         :param eta: learning rate for adaptive optimizer.
         :param penalty: regularization (l1, l2 or None). Default l2.
         :param C: inverse of regularization strength
+        :param batch_size: training batch size
         :param random_state: int, random state
         """
         self.n_factors = n_factors
@@ -43,6 +45,7 @@ class BaseFactorizationMachine(BaseEstimator):
             self.penalty_function = l2_norm if penalty == 'l2' else l1_norm
         self.eta = eta
         self.C = C
+        self.batch_size = batch_size
         self.random_state = random_state
 
 
@@ -57,12 +60,10 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
             random_state=random_state)
         self.loss = MSE
 
-
-
     def fit(self, X, y):
         """Fit a factorization machine model
 
-        Internally, X and y are converted to to ShuffleDataset with types (float32, float32)
+        Internally, X and y are converted to a Tensorflow Dataset with types (float32, float32)
 
         :param X: {array-like} of shape (n_samples, n_features)
             Training data.
@@ -73,7 +74,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
         column_or_1d(y)
 
-        train_dataset = to_tf_shuffled_dataset(X, y)
+        train_dataset = to_tf_dataset(X, y, batch_size=self.batch_size,)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)
         self.w0_, self.W_, self.V_ = train(train_dataset, num_factors=self.n_factors,
                                            max_iter=self.max_iter,
@@ -108,7 +109,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
 
 
 class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
-    def __init__(self, n_factors=2, max_iter=100, eta=0.001, penalty='l2', C=1.0, random_state=None):
+    def __init__(self, n_factors=2, max_iter=10, eta=0.001, penalty='l2', C=1.0, random_state=None):
         super().__init__(
             n_factors=n_factors,
             max_iter=max_iter,
@@ -121,7 +122,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
     def fit(self, X, y):
             """Fit a factorization machine binary classifier
 
-            Internally, X and y are converted to to ShuffleDataset with types (float32, float32)
+            Internally, X and y are converted to to Dataset with types (float32, float32)
 
             :param X: {array-like} of shape (n_samples, n_features)
                 Training data.
@@ -133,7 +134,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             column_or_1d(y)
             self.label_binarizer = LabelBinarizer().fit(y)
             y = self.label_binarizer.transform(y)
-            train_dataset = to_tf_shuffled_dataset(X, y)
+            train_dataset = to_tf_dataset(X, y, batch_size=self.batch_size)
 
             self.classes_ = self.label_binarizer.classes_
             self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)

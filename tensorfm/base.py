@@ -1,15 +1,13 @@
 import tensorflow as tf
 import numpy as np
-import logging
 
-TF_DATASET_BATCH_SIZE = 5000
-TF_DATASET_SHUFFLE = 10000
+TF_DATASET_BATCH_SIZE = 30000
 
 
-def to_tf_shuffled_dataset(X, y, dtype=tf.float64, batch_size=TF_DATASET_BATCH_SIZE, shuffle_size=TF_DATASET_SHUFFLE):
-    if isinstance(X, list):
+def to_tf_dataset(X, y, dtype=tf.float32, batch_size=TF_DATASET_BATCH_SIZE, shuffle_buffer_size=None):
+    if isinstance(X, (list, tuple)):
         X = np.array(X)
-    if isinstance(y, list):
+    if isinstance(y, (list, tuple)):
         y = np.array(y)
 
     if X.shape[0] != y.shape[0]:
@@ -20,13 +18,15 @@ def to_tf_shuffled_dataset(X, y, dtype=tf.float64, batch_size=TF_DATASET_BATCH_S
         tf.data.Dataset.from_tensor_slices((tf.cast(X, dtype=dtype),
                                             tf.cast(y, dtype=dtype)))
             .batch(batch_size)
-            .shuffle(shuffle_size)
     )
+
+    if shuffle_buffer_size:
+        dataset = dataset.shuffle(shuffle_buffer_size)
 
     return dataset
 
 
-def to_tf_dataset_X(X, dtype=tf.float64):
+def to_tf_dataset_X(X, dtype=tf.float32):
     X = np.array(X)
     return tf.cast(X, dtype=dtype)
 
@@ -46,8 +46,6 @@ def l1_norm(V, W, lambda_=0.001):
         tf.add(
             tf.multiply(lambda_, tf.abs(W, 2)),
             tf.multiply(lambda_, tf.abs(V, 2)))))
-
-
     return l1_norm
 
 
@@ -56,7 +54,6 @@ def l2_norm(V, W, lambda_=0.001):
         tf.add(
             tf.multiply(lambda_, tf.pow(W, 2)),
             tf.multiply(lambda_, tf.pow(V, 2)))))
-
     return l2_norm
 
 
@@ -77,8 +74,8 @@ def fm(X, w0, W, V):
 
     return w0 + linear_terms + 0.5 * interactions
 
-def train(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, loss=None,
-          optimizer=None, activation=None, loss_kwargs={}, random_state=None):
+def train(train_dataset, num_factors=2, max_iter=10, penalty=None, C=1.0, loss=None,
+          optimizer=None, activation=None, loss_kwargs={}, random_state=None, dtype=tf.float32):
     """Fit a degree 2 polynomial factorization machine, implemented atop tensorflow 2.
        This class contains the generic code for training a FM. Regressors and classifiers can be learnt
        by minimizing appropriate loss functions (e.g. MSE or cross entropy)."""
@@ -94,11 +91,11 @@ def train(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, loss=
     # Get the number of feature columns
     p = train_dataset.element_spec[0].shape[1]
     # bias and weights
-    w0 = tf.Variable(tf.zeros([1], dtype=tf.float64))
-    W = tf.Variable(tf.zeros([p],  dtype=tf.float64))
+    w0 = tf.Variable(tf.zeros([1], dtype=dtype))
+    W = tf.Variable(tf.zeros([p],  dtype=dtype))
     # interaction factors, randomly initialized
     V = tf.Variable(
-        tf.random.normal([num_factors, p], stddev=0.01, dtype=tf.dtypes.float64, seed=random_state))
+        tf.random.normal([num_factors, p], stddev=0.01, dtype=dtype, seed=random_state))
 
     for epoch_count in range(max_iter):
         for (x, y) in train_dataset:
