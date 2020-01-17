@@ -6,8 +6,9 @@ A sklearn compatible order 2 Factorization Machine, implemented atop TensorFlow 
 The algorithm is described in http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf. For an higher level
 overview of the method see http://nowave.it/factorization-machines-with-tensorflow.html.
 
-This package is a port of the code presented in the blog post to Tensorflow 2. The goal of this project is
-to be and experimentation framework for different optimization strategies on classical ML models.
+This package is a port to Tensorflow 2 of the code presented in that blog post. The goal of this project is
+to experiment with different optimization strategies for classical ML models, and scalability of
+TF2 backends.
 
 ## Install
 
@@ -39,7 +40,8 @@ of iterations.
 
 ## Performance
 
-All parameters and settings being equal, I noticed a considerable performance degradation (MSE on train/test)
-on movielens compared to the tensorflow 1 implementation from http://nowave.it/factorization-machines-with-tensorflow.html.
+All parameters and settings being equal, I noticed a considerable performance degradation of
+`FactorizationMachineRegressor` (MSE on train/test) on movielens compared to the tensorflow 1 implementation
+from http://nowave.it/factorization-machines-with-tensorflow.html.
 Possibly related, a test in the `check_regressors_train` suite (`sklearn`) fails due to a low `R^2`. As a workaround
 `FactorizationMachineRegressor` sets the `poor_score` tag to `True`.
