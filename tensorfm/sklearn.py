@@ -121,6 +121,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         :return y: array, shape (n_samples,)
         """
         check_is_fitted(self)
+        X = utils.check_array(X)
         X = to_tf_tensor(X)
         pred = fm(X, self.w0_, self.W_, self.V_).numpy()
         pred = column_or_1d(pred, warn=True)
@@ -203,7 +204,8 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
                     with shape (n_samples, n_features)
         :return y: array, shape (n_samples,)
         """
-        pred = self._predict(X).numpy() > 0.5
+        X = utils.check_array(X)
+        pred = self._predict(X).numpy() > 0.0
 
         return self.label_binarizer.inverse_transform(pred)
 

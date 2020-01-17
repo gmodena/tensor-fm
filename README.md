@@ -4,6 +4,8 @@ A sklearn compatible order 2 Factorization Machine, implemented atop TensorFlow 
 The algorithm is described in http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf. For an higher level
 overview of the method see http://nowave.it/factorization-machines-with-tensorflow.html.
 
+This package is a port of the code presented in the blog post to Tensorflow 2. The goal of this project is
+to be and experimentation framework for different optimization strategies on classical ML models.
 
 ## Install
 
