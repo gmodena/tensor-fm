@@ -1,14 +1,16 @@
-from distutils.core import setup
+from setuptools import setup
 
 REQUIRED_PKGS = ['tensorflow==2.0.0', 'scikit-learn==0.22.1']
-
-TESTS_REQUIRE = ['pytest==5.2.2', 'coverage==5.0.3']
+TESTS_REQUIRE = ['pytest==5.2.2']
 
 setup(
     name='TensorFM',
     version='1.0.0',
-    packages=['tensorfm',],
+    author='Gabriele Modena',
+    author_email='gmodena@nowave.it',
+    packages=['tensorfm'],
     license='MIT',
+    install_requires=REQUIRED_PKGS,
     tests_require=TESTS_REQUIRE,
     long_description=open('README.md').read(),
 )
