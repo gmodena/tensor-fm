@@ -1,5 +1,5 @@
 import pytest
-from tensorfm.base import train, fm, l1_norm, l2_norm
+from tensorfm.base import train, fm, l1_norm, l2_norm, noop_norm
 from tensorfm.util import to_tf_dataset, to_tf_tensor
 from tensorflow.keras.losses import MSE, binary_crossentropy
 
@@ -7,12 +7,12 @@ from tensorflow.keras.losses import MSE, binary_crossentropy
 def test_base_regr(rendle_dataset, optimizer):
     x_data, y_data = rendle_dataset
     train_dataset = to_tf_dataset(x_data, y_data)
-
-    for penalty in [l1_norm, l2_norm, None]:
-        w0, W, V = train(train_dataset, optimizer=optimizer, loss=MSE, penalty=penalty)
-        assert w0 is not None
-        assert W is not None
-        assert V is not None
+    num_factors = 2
+    for penalty in [l1_norm, l2_norm, noop_norm]:
+        w0, W, V = train(train_dataset, num_factors=num_factors, optimizer=optimizer, loss=MSE, penalty=penalty)
+        assert w0.shape == 1
+        assert W.shape == x_data.shape[1]
+        assert V.shape == (num_factors, x_data.shape[1])
 
         # predict multiple instances
         pred = fm(to_tf_tensor(x_data), w0, W, V)
@@ -27,12 +27,12 @@ def test_base_regr(rendle_dataset, optimizer):
 def test_base_clf(rendle_dataset, optimizer):
     x_data, y_data = rendle_dataset
     train_dataset = to_tf_dataset(x_data, y_data)
-
-    for penalty in [l1_norm, l2_norm, None]:
+    num_factors = 2
+    for penalty in [l1_norm, l2_norm, noop_norm]:
         w0, W, V = train(train_dataset, optimizer=optimizer, loss=binary_crossentropy, penalty=penalty)
-        assert w0 is not None
-        assert W is not None
-        assert V is not None
+        assert w0.shape == 1
+        assert W.shape == x_data.shape[1]
+        assert V.shape == (num_factors, x_data.shape[1])
 
         # predict multiple instances
         r = fm(to_tf_tensor(x_data), w0, W, V)

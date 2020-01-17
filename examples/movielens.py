@@ -28,7 +28,7 @@ X_test = v.transform(test_data)
 
 y_train.shape += (1,)
 
-fm = FactorizationMachineRegressor(max_iter=10, n_factors=20, eta=0.01, C=10000, random_state=12345, penalty='l1')
+fm = FactorizationMachineRegressor(max_iter=100, n_factors=20, eta=0.01, C=10000, random_state=12345, batch_size=50000, penalty='l2')
 fm.fit(X_train.todense(), y_train)
 y_pred = fm.predict(X_test.todense())
 print("MSE test ", mean_squared_error(y_test, y_pred))

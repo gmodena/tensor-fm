@@ -1,3 +1,4 @@
+from . import logger
 import tensorflow as tf
 
 
@@ -14,6 +15,12 @@ def l2_norm(V, W, lambda_=0.001):
     )
     return l2_norm
 
+def noop_norm(V, W, lambda_=None):
+    return 0
+
+
+def mse(y, y_hat):
+    return tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
 
 def fm(X, w0, W, V):
     linear_terms = X * W
@@ -67,14 +74,12 @@ def train(
     )
 
     for epoch_count in range(max_iter):
-        for (x, y) in train_dataset:
+        for batch, (x, y) in enumerate(train_dataset):
             with tf.GradientTape() as tape:
                 pred = fm(x, w0, W, V)
-                loss_ = loss(y, pred)
-                if penalty:
-                    loss_ += penalty(V, W, lambda_=1.0 / C)
-
-            # Update gradients
+                loss_ = loss(y, pred) + penalty(V, W, lambda_=1.0 / C)
+                # Update gradients
             grads = tape.gradient(loss_, [w0, W, V])
             optimizer.apply_gradients(zip(grads, [w0, W, V]))
+            logger.debug(f"Epoch: {epoch_count}, batch: {batch} loss:, {loss_.numpy()}")
     return w0, W, V

@@ -3,7 +3,7 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 
 """
 from .base import train, fm
-from .base import l2_norm, l1_norm
+from .base import l2_norm, l1_norm, noop_norm, mse
 
 from .util import to_tf_dataset, to_tf_tensor, TF_DATASET_BATCH_SIZE
 
@@ -51,9 +51,10 @@ class BaseFactorizationMachine(BaseEstimator):
         if penalty and penalty not in ("l1", "l2"):
             raise ValueError(f"penalty must be l1, l2 or None")
         self.penalty = penalty
-        self.penalty_function = None
+        self.penalty_function = noop_norm
         if penalty:
             self.penalty_function = l2_norm if penalty == "l2" else l1_norm
+
         self.eta = eta
         self.C = C
         self.batch_size = batch_size
@@ -68,6 +69,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         eta=0.001,
         penalty="l2",
         C=1.0,
+            batch_size=TF_DATASET_BATCH_SIZE,
         random_state=None,
     ):
         super().__init__(
@@ -76,9 +78,10 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
             eta=eta,
             penalty=penalty,
             C=C,
+            batch_size=batch_size,
             random_state=random_state,
         )
-        self.loss = MSE
+        self.loss = mse
 
     def fit(self, X, y):
         """Fit a factorization machine regressor
@@ -140,6 +143,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
         eta=0.001,
         penalty="l2",
         C=1.0,
+            batch_size=TF_DATASET_BATCH_SIZE,
         random_state=None,
     ):
         super().__init__(
@@ -148,6 +152,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             eta=eta,
             penalty=penalty,
             C=C,
+            batch_size=batch_size,
             random_state=random_state,
         )
         self.loss = partial(binary_crossentropy, from_logits=True)
@@ -161,7 +166,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
                 Training data.
             :param y: array-like of shape (n_samples,) or (n_samples, n_targets)
                 Target values.
-            :return: an instance of self.
+            :return: an instance of self
             """
         X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
         column_or_1d(y)
@@ -189,7 +194,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
         try:
             pred = tf.nn.sigmoid(fm(X, self.w0_, self.W_, self.V_))
         except TensoFlowInvalidArgumentError as e:
-            # Re-raise a sklearn friendly exception type
+            # Re-raise a sklearn friendly exception
             raise ValueError(str(e))
         return pred
 
