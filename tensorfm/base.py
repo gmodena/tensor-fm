@@ -3,7 +3,7 @@ import tensorflow as tf
 
 def l1_norm(V, W, lambda_=0.001):
     l1_norm = tf.reduce_sum(
-        tf.add(tf.multiply(lambda_, tf.abs(W, 2)), tf.multiply(lambda_, tf.abs(V, 2)))
+        tf.add(tf.multiply(lambda_, tf.abs(W)), tf.multiply(lambda_, tf.abs(V)))
     )
     return l1_norm
 
@@ -63,7 +63,7 @@ def train(
     W = tf.Variable(tf.zeros([p], dtype=dtype))
     # interaction factors, randomly initialized
     V = tf.Variable(
-        tf.random.normal([num_factors, p], stddev=0.01, dtype=dtype, seed=random_state)
+        tf.random.normal([num_factors, p], mean=0.0, stddev=0.01, dtype=dtype, seed=random_state)
     )
 
     for epoch_count in range(max_iter):

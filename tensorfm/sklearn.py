@@ -106,7 +106,6 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
             penalty=self.penalty_function,
             random_state=self.random_state,
         )
-
         return self
 
     def predict(self, X):
@@ -127,6 +126,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
 
     def _more_tags(self):
         tags = super()._more_tags()
+        # TODO(gmodena): this needs investigation; also wrt performance degradation on movielens
         tags["poor_score"] = True
 
         return tags
