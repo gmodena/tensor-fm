@@ -25,7 +25,7 @@ from sklearn.utils.validation import (
 )
 
 import tensorflow as tf
-
+import numpy as np
 
 class BaseFactorizationMachine(BaseEstimator):
     def __init__(
@@ -153,6 +153,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             random_state=random_state,
         )
         self.loss = binary_crossentropy
+        self.activation = tf.nn.sigmoid
 
     def fit(self, X, y):
         """Fit a factorization machine binary classifier
@@ -180,7 +181,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             optimizer=self.optimizer,
             loss=self.loss,
             penalty=self.penalty_function,
-            activation=tf.nn.sigmoid,
+            activation=self.activation,
             loss_kwargs={"from_logits": True},
             random_state=self.random_state,
         )
@@ -188,23 +189,25 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
 
     def _predict(self, X):
         check_is_fitted(self)
+        X = utils.check_array(X)
         X = to_tf_tensor(X)
         try:
-            pred = fm(X, self.w0_, self.W_, self.V_)
+            pred = self.activation(fm(X, self.w0_, self.W_, self.V_))
         except:
             raise ValueError()
+        column_or_1d(pred.numpy(), warn=True)
         return pred
 
-    def predict(self, X):
+    def predict(self, X, threshold=0.5):
         """Predict using a factorization machine model
 
         :param X: array-like, shape (n_samples, n_features).
                     The input samples. Internally, it will be converted to a float32 Tensor
                     with shape (n_samples, n_features)
+        :param threshold: decision boundary between classes
         :return y: array, shape (n_samples,)
         """
-        X = utils.check_array(X)
-        pred = self._predict(X).numpy() > 0.0
+        pred = self._predict(X).numpy() > threshold
 
         return self.label_binarizer.inverse_transform(pred)
 
