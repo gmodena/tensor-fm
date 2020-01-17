@@ -69,7 +69,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         eta=0.001,
         penalty="l2",
         C=1.0,
-            batch_size=TF_DATASET_BATCH_SIZE,
+        batch_size=TF_DATASET_BATCH_SIZE,
         random_state=None,
     ):
         super().__init__(
@@ -143,7 +143,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
         eta=0.001,
         penalty="l2",
         C=1.0,
-            batch_size=TF_DATASET_BATCH_SIZE,
+        batch_size=TF_DATASET_BATCH_SIZE,
         random_state=None,
     ):
         super().__init__(

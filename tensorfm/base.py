@@ -15,12 +15,14 @@ def l2_norm(V, W, lambda_=0.001):
     )
     return l2_norm
 
+
 def noop_norm(V, W, lambda_=None):
     return 0
 
 
 def mse(y, y_hat):
     return tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
+
 
 def fm(X, w0, W, V):
     linear_terms = X * W
@@ -70,7 +72,9 @@ def train(
     W = tf.Variable(tf.zeros([p], dtype=dtype))
     # interaction factors, randomly initialized
     V = tf.Variable(
-        tf.random.normal([num_factors, p], mean=0.0, stddev=0.01, dtype=dtype, seed=random_state)
+        tf.random.normal(
+            [num_factors, p], mean=0.0, stddev=0.01, dtype=dtype, seed=random_state
+        )
     )
 
     for epoch_count in range(max_iter):
