@@ -3,7 +3,13 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 
 """
 from .base import train, fm
-from .base import l2_norm, l1_norm, to_tf_dataset, to_tf_dataset_X, TF_DATASET_BATCH_SIZE
+from .base import (
+    l2_norm,
+    l1_norm,
+    to_tf_dataset,
+    to_tf_dataset_X,
+    TF_DATASET_BATCH_SIZE,
+)
 from sklearn import utils
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
@@ -22,8 +28,16 @@ import tensorflow as tf
 
 
 class BaseFactorizationMachine(BaseEstimator):
-    def __init__(self, n_factors=2, max_iter=10, eta=0.001, penalty='l2', C=1.0, batch_size=TF_DATASET_BATCH_SIZE,
-                 random_state=None):
+    def __init__(
+        self,
+        n_factors=2,
+        max_iter=10,
+        eta=0.001,
+        penalty="l2",
+        C=1.0,
+        batch_size=TF_DATASET_BATCH_SIZE,
+        random_state=None,
+    ):
         """Factorization machine for regularized regression
 
         :param n_factors: number of latent factor vectors
@@ -37,12 +51,12 @@ class BaseFactorizationMachine(BaseEstimator):
         self.n_factors = n_factors
         self.max_iter = max_iter
         self.C = C
-        if penalty and penalty not in ('l1', 'l2'):
+        if penalty and penalty not in ("l1", "l2"):
             raise ValueError(f"penalty must be l1, l2 or None")
         self.penalty = penalty
         self.penalty_function = None
         if penalty:
-            self.penalty_function = l2_norm if penalty == 'l2' else l1_norm
+            self.penalty_function = l2_norm if penalty == "l2" else l1_norm
         self.eta = eta
         self.C = C
         self.batch_size = batch_size
@@ -50,14 +64,23 @@ class BaseFactorizationMachine(BaseEstimator):
 
 
 class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
-    def __init__(self, n_factors=2, max_iter=100, eta=0.001, penalty='l2', C=1.0, random_state=None):
+    def __init__(
+        self,
+        n_factors=2,
+        max_iter=100,
+        eta=0.001,
+        penalty="l2",
+        C=1.0,
+        random_state=None,
+    ):
         super().__init__(
             n_factors=n_factors,
             max_iter=max_iter,
             eta=eta,
             penalty=penalty,
             C=C,
-            random_state=random_state)
+            random_state=random_state,
+        )
         self.loss = MSE
 
     def fit(self, X, y):
@@ -76,13 +99,16 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
 
         train_dataset = to_tf_dataset(X, y, batch_size=self.batch_size,)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)
-        self.w0_, self.W_, self.V_ = train(train_dataset, num_factors=self.n_factors,
-                                           max_iter=self.max_iter,
-                                           optimizer=self.optimizer,
-                                           loss=self.loss,
-                                           C=self.C,
-                                           penalty=self.penalty_function,
-                                           random_state=self.random_state)
+        self.w0_, self.W_, self.V_ = train(
+            train_dataset,
+            num_factors=self.n_factors,
+            max_iter=self.max_iter,
+            optimizer=self.optimizer,
+            loss=self.loss,
+            C=self.C,
+            penalty=self.penalty_function,
+            random_state=self.random_state,
+        )
 
         return self
 
@@ -103,24 +129,33 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
 
     def _more_tags(self):
         tags = super()._more_tags()
-        tags['poor_score'] = True
+        tags["poor_score"] = True
 
         return tags
 
 
 class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
-    def __init__(self, n_factors=2, max_iter=10, eta=0.001, penalty='l2', C=1.0, random_state=None):
+    def __init__(
+        self,
+        n_factors=2,
+        max_iter=10,
+        eta=0.001,
+        penalty="l2",
+        C=1.0,
+        random_state=None,
+    ):
         super().__init__(
             n_factors=n_factors,
             max_iter=max_iter,
             eta=eta,
-            penalty = penalty,
+            penalty=penalty,
             C=C,
-            random_state=random_state)
+            random_state=random_state,
+        )
         self.loss = binary_crossentropy
 
     def fit(self, X, y):
-            """Fit a factorization machine binary classifier
+        """Fit a factorization machine binary classifier
 
             Internally, X and y are converted to to Dataset with types (float32, float32)
 
@@ -130,24 +165,26 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
                 Target values.
             :return: an instance of self.
             """
-            X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
-            column_or_1d(y)
-            self.label_binarizer = LabelBinarizer().fit(y)
-            y = self.label_binarizer.transform(y)
-            train_dataset = to_tf_dataset(X, y, batch_size=self.batch_size)
+        X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
+        column_or_1d(y)
+        self.label_binarizer = LabelBinarizer().fit(y)
+        y = self.label_binarizer.transform(y)
+        train_dataset = to_tf_dataset(X, y, batch_size=self.batch_size)
 
-            self.classes_ = self.label_binarizer.classes_
-            self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)
-            self.w0_, self.W_, self.V_ = train(train_dataset,
-                                               num_factors=self.n_factors,
-                                               max_iter=self.max_iter,
-                                               optimizer=self.optimizer,
-                                               loss=self.loss,
-                                               penalty=self.penalty_function,
-                                               activation=tf.nn.sigmoid,
-                                               loss_kwargs={'from_logits': True},
-                                               random_state=self.random_state)
-            return self
+        self.classes_ = self.label_binarizer.classes_
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.eta)
+        self.w0_, self.W_, self.V_ = train(
+            train_dataset,
+            num_factors=self.n_factors,
+            max_iter=self.max_iter,
+            optimizer=self.optimizer,
+            loss=self.loss,
+            penalty=self.penalty_function,
+            activation=tf.nn.sigmoid,
+            loss_kwargs={"from_logits": True},
+            random_state=self.random_state,
+        )
+        return self
 
     def _predict(self, X):
         check_is_fitted(self)
@@ -172,6 +209,5 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
 
     def _more_tags(self):
         tags = super()._more_tags()
-        tags['binary_only'] = True
+        tags["binary_only"] = True
         return tags
-
