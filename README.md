@@ -1,4 +1,4 @@
-![](https://github.com/gmodena/tensorfm/workflows/build/badge.svg)
+![](https://github.com/gmodena/tensor-fm/workflows/build/badge.svg)
 
 # tensor-fm
 
