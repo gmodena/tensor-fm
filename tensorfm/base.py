@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 def l1_norm(V, W, lambda_=0.001):
     l1_norm = tf.reduce_sum(
         tf.add(tf.multiply(lambda_, tf.abs(W, 2)), tf.multiply(lambda_, tf.abs(V, 2)))

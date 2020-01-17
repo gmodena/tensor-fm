@@ -3,15 +3,9 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 
 """
 from .base import train, fm
-from .base import (
-    l2_norm,
-    l1_norm)
+from .base import l2_norm, l1_norm
 
-from .util import (
-    to_tf_dataset,
-    to_tf_tensor,
-    TF_DATASET_BATCH_SIZE
-)
+from .util import to_tf_dataset, to_tf_tensor, TF_DATASET_BATCH_SIZE
 
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
 from sklearn.preprocessing import LabelBinarizer
@@ -25,9 +19,12 @@ from sklearn.utils.validation import (
 )
 from functools import partial
 
-from tensorflow.python.framework.errors_impl import InvalidArgumentError as TensoFlowInvalidArgumentError
+from tensorflow.python.framework.errors_impl import (
+    InvalidArgumentError as TensoFlowInvalidArgumentError,
+)
 import tensorflow as tf
 import numpy as np
+
 
 class BaseFactorizationMachine(BaseEstimator):
     def __init__(
