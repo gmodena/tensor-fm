@@ -25,7 +25,7 @@ fm.fit(X, y)
 fm.predict(X)
 ```
 
-See also `examples/movielense.py`
+See also `examples/movielens.py`
 
 ## Limitations and known issues
 

@@ -9,5 +9,6 @@ setup(
     version='1.0.0',
     packages=['tensorfm',],
     license='MIT',
+    tests_require=TESTS_REQUIRE,
     long_description=open('README.md').read(),
 )
