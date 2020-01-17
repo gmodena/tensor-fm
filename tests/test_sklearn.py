@@ -16,7 +16,7 @@ regressor_checks = (
 classifier_checks = (
     estimator_checks.check_classifier_data_not_an_array,
     estimator_checks.check_classifiers_one_label,
-    estimator_checks.check_classifiers_classes, # TODO(gmodena) the generated dataset is a degenerate case for this FM implementation
+    estimator_checks.check_classifiers_classes,
     estimator_checks.check_estimators_partial_fit_n_features,
     estimator_checks.check_classifiers_train,
     estimator_checks.check_classifiers_regression_target,
