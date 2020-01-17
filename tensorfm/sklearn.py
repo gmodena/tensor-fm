@@ -23,7 +23,6 @@ from tensorflow.python.framework.errors_impl import (
     InvalidArgumentError as TensoFlowInvalidArgumentError,
 )
 import tensorflow as tf
-import numpy as np
 
 
 class BaseFactorizationMachine(BaseEstimator):

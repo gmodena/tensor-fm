@@ -7,7 +7,7 @@ setup(
     name='TensorFM',
     version='1.0.0',
     author='Gabriele Modena',
-    author_email='gmodena@nowave.it',
+    author_email='gm@nowave.it',
     packages=['tensorfm'],
     license='MIT',
     install_requires=REQUIRED_PKGS,
