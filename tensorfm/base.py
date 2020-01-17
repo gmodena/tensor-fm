@@ -6,7 +6,7 @@ TF_DATASET_BATCH_SIZE = 5000
 TF_DATASET_SHUFFLE = 10000
 
 
-def to_tf_shuffled_dataset(X, y, dtype=tf.float32, batch_size=TF_DATASET_BATCH_SIZE, shuffle_size=TF_DATASET_SHUFFLE):
+def to_tf_shuffled_dataset(X, y, dtype=tf.float64, batch_size=TF_DATASET_BATCH_SIZE, shuffle_size=TF_DATASET_SHUFFLE):
     if isinstance(X, list):
         X = np.array(X)
     if isinstance(y, list):
@@ -26,7 +26,7 @@ def to_tf_shuffled_dataset(X, y, dtype=tf.float32, batch_size=TF_DATASET_BATCH_S
     return dataset
 
 
-def to_tf_dataset_X(X, dtype=tf.float32):
+def to_tf_dataset_X(X, dtype=tf.float64):
     X = np.array(X)
     return tf.cast(X, dtype=dtype)
 
@@ -94,11 +94,11 @@ def train(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, loss=
     # Get the number of feature columns
     p = train_dataset.element_spec[0].shape[1]
     # bias and weights
-    w0 = tf.Variable(tf.zeros([1]))
-    W = tf.Variable(tf.zeros([p]))
+    w0 = tf.Variable(tf.zeros([1], dtype=tf.float64))
+    W = tf.Variable(tf.zeros([p],  dtype=tf.float64))
     # interaction factors, randomly initialized
     V = tf.Variable(
-        tf.random.normal([num_factors, p], stddev=0.01, dtype=tf.dtypes.float32, seed=random_state))
+        tf.random.normal([num_factors, p], stddev=0.01, dtype=tf.dtypes.float64, seed=random_state))
 
     for epoch_count in range(max_iter):
         for (x, y) in train_dataset:
