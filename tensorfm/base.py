@@ -20,10 +20,6 @@ def noop_norm(V, W, lambda_=None):
     return 0
 
 
-def mse(y, y_hat):
-    return tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
-
-
 def fm(X, w0, W, V):
     linear_terms = X * W
     interactions = tf.subtract(

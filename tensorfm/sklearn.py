@@ -3,7 +3,7 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 
 """
 from .base import train, fm
-from .base import l2_norm, l1_norm, noop_norm, mse
+from .base import l2_norm, l1_norm, noop_norm
 
 from .util import to_tf_dataset, to_tf_tensor, TF_DATASET_BATCH_SIZE
 
@@ -81,7 +81,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
             batch_size=batch_size,
             random_state=random_state,
         )
-        self.loss = mse
+        self.loss = MSE
 
     def fit(self, X, y):
         """Fit a factorization machine regressor
