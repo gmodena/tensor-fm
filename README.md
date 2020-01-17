@@ -27,4 +27,13 @@ fm.predict(X)
 
 See also `examples/movielense.py`
 
-## Limitations
+## Limitations and known issues
+
+Operations on sparse matrices are currently not supported.
+Training continues till `max_iter` is reached, we should stop if performance does not improve for a certain number
+of iterations.
+
+## Performance
+
+All parameters and settings being equal, I noticed a considerable performance degradation (MSE on train/test)
+on movielens compared to the tensorflow 1 implementation from http://nowave.it/factorization-machines-with-tensorflow.html

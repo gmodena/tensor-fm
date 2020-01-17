@@ -5,21 +5,21 @@ Custom scikit-learn estimators for supervised learning with Factorization Machin
 from .base import train, fm
 from .base import (
     l2_norm,
-    l1_norm,
+    l1_norm)
+
+from .util import (
     to_tf_dataset,
-    to_tf_dataset_X,
-    TF_DATASET_BATCH_SIZE,
+    to_tf_tensor,
+    TF_DATASET_BATCH_SIZE
 )
-from sklearn import utils
+
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder
-from sklearn.utils.validation import check_is_fitted
+from sklearn.preprocessing import LabelBinarizer
 from tensorflow.keras.losses import MSE, binary_crossentropy
 
-
+from sklearn import utils
 from sklearn.utils.validation import (
     check_is_fitted,
-    check_array,
     FLOAT_DTYPES,
     column_or_1d,
 )
@@ -121,7 +121,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         :return y: array, shape (n_samples,)
         """
         check_is_fitted(self)
-        X = to_tf_dataset_X(X)
+        X = to_tf_tensor(X)
         pred = fm(X, self.w0_, self.W_, self.V_).numpy()
         pred = column_or_1d(pred, warn=True)
 
@@ -188,7 +188,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
 
     def _predict(self, X):
         check_is_fitted(self)
-        X = to_tf_dataset_X(X)
+        X = to_tf_tensor(X)
         try:
             pred = fm(X, self.w0_, self.W_, self.V_)
         except:
