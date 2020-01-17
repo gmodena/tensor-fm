@@ -36,7 +36,7 @@ class BaseFactorizationMachine(BaseEstimator):
         batch_size=TF_DATASET_BATCH_SIZE,
         random_state=None,
     ):
-        """Factorization machine for regularized regression
+        """A base class for factorization machines
 
         :param n_factors: number of latent factor vectors
         :param max_iter: iterations to convergence
@@ -81,7 +81,7 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         self.loss = MSE
 
     def fit(self, X, y):
-        """Fit a factorization machine model
+        """Fit a factorization machine regressor
 
         Internally, X and y are converted to a Tensorflow Dataset with types (float32, float32)
 
