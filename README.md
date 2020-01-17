@@ -1,3 +1,5 @@
+![](https://github.com/gmodena/tensorfm/workflows/build/badge.svg)
+
 # tensor-fm
 
 A sklearn compatible order 2 Factorization Machine, implemented atop TensorFlow 2.
