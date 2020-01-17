@@ -1,11 +1,12 @@
 import tensorflow as tf
 import numpy as np
+import logging
 
-TF_DATASET_BATCH_SIZE = 200
-TF_DATASET_SHUFFLE = 1000
+TF_DATASET_BATCH_SIZE = 5000
+TF_DATASET_SHUFFLE = 10000
 
 
-def to_tf_shuffled_dataset(X, y, dtype=tf.float32):
+def to_tf_shuffled_dataset(X, y, dtype=tf.float32, batch_size=TF_DATASET_BATCH_SIZE, shuffle_size=TF_DATASET_SHUFFLE):
     if isinstance(X, list):
         X = np.array(X)
     if isinstance(y, list):
@@ -16,10 +17,11 @@ def to_tf_shuffled_dataset(X, y, dtype=tf.float32):
                      "examples is not the same as the number of "
                      "labels")
     dataset = (
-        tf.data.Dataset.from_tensor_slices((tf.reshape(tf.cast(X, dtype=dtype), [-1, X.shape[1]]),
+        tf.data.Dataset.from_tensor_slices((tf.cast(X, dtype=dtype),
                                             tf.cast(y, dtype=dtype)))
-            .batch(TF_DATASET_BATCH_SIZE)
-            .shuffle(TF_DATASET_SHUFFLE))
+            .batch(batch_size)
+            .shuffle(shuffle_size)
+    )
 
     return dataset
 
@@ -39,15 +41,11 @@ def check_loss(loss, penalty):
         raise ValueError(f"{penalty.__name__} not supported")
 
 
-def mse(y, y_hat):
-    return tf.reduce_mean(tf.square(tf.subtract(y, y_hat)))
-
-
 def l1_norm(V, W, lambda_=0.001):
     l1_norm = (tf.reduce_sum(
         tf.add(
-            tf.multiply(lambda_, tf.cast(tf.abs(W, 2), tf.float32)),
-            tf.multiply(lambda_, tf.cast(tf.abs(V, 2), tf.float32)))))
+            tf.multiply(lambda_, tf.abs(W, 2)),
+            tf.multiply(lambda_, tf.abs(V, 2)))))
 
 
     return l1_norm
@@ -56,14 +54,14 @@ def l1_norm(V, W, lambda_=0.001):
 def l2_norm(V, W, lambda_=0.001):
     l2_norm = (tf.reduce_sum(
         tf.add(
-            tf.multiply(lambda_, tf.cast(tf.pow(W, 2), tf.float32)),
-            tf.multiply(lambda_, tf.cast(tf.pow(V, 2), tf.float32)))))
+            tf.multiply(lambda_, tf.pow(W, 2)),
+            tf.multiply(lambda_, tf.pow(V, 2)))))
 
     return l2_norm
 
 
-def model(X, w0, W, V):
-    linear_terms = W * X
+def fm(X, w0, W, V):
+    linear_terms = X * W
     interactions = tf.subtract(
         tf.pow(tf.tensordot(X, tf.transpose(V), 1), 2),
         tf.tensordot(tf.pow(X, 2), tf.transpose(tf.pow(V, 2)), 1))
@@ -73,13 +71,14 @@ def model(X, w0, W, V):
         interactions = tf.reduce_sum(interactions, 1, keepdims=True)
 
     else:
-        linear_terms = tf.reduce_sum(linear_terms) #tf.tensordot(X, tf.transpose(self.W_), 1)
+        # One dimensional data: e.g. passed when we call fm() for inference
+        linear_terms = tf.reduce_sum(linear_terms)
         interactions = tf.reduce_sum(interactions)
 
     return w0 + linear_terms + 0.5 * interactions
 
-def fit_2d_fm(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, loss=None,
-        optimizer=None, activation=None, loss_kwargs={}, random_state=None):
+def train(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, loss=None,
+          optimizer=None, activation=None, loss_kwargs={}, random_state=None):
     """Fit a degree 2 polynomial factorization machine, implemented atop tensorflow 2.
        This class contains the generic code for training a FM. Regressors and classifiers can be learnt
        by minimizing appropriate loss functions (e.g. MSE or cross entropy)."""
@@ -104,7 +103,7 @@ def fit_2d_fm(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, l
     for epoch_count in range(max_iter):
         for (x, y) in train_dataset:
             with tf.GradientTape() as tape:
-                pred = model(x, w0, W, V)
+                pred = fm(x, w0, W, V)
                 if activation:
                     pred = activation(pred)
                 loss_ = loss(y, pred, **loss_kwargs)
@@ -112,6 +111,7 @@ def fit_2d_fm(train_dataset, num_factors=2, max_iter=100, penalty=None, C=1.0, l
                     loss_ += penalty(V, W, lambda_=1.0 / C)
 
             # Update gradients
-            grads = tape.gradient(loss_, [W, w0])
-            optimizer.apply_gradients(zip(grads, [W, w0]))
+            grads = tape.gradient(loss_, [w0, W, V])
+            optimizer.apply_gradients(zip(grads, [w0, W, V]))
     return w0, W, V
+
