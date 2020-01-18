@@ -167,7 +167,7 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
             :param y: array-like of shape (n_samples,) or (n_samples, n_targets)
                 Target values.
             :return: an instance of self
-            """
+        """
         X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
         column_or_1d(y)
         self.label_binarizer = LabelBinarizer().fit(y)

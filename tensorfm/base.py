@@ -76,7 +76,6 @@ def train(
             with tf.GradientTape() as tape:
                 pred = fm(x, w0, W, V)
                 loss_ = loss(y, pred) + penalty(V, W, lambda_=1.0 / C)
-                # Update gradients
             grads = tape.gradient(loss_, [w0, W, V])
             optimizer.apply_gradients(zip(grads, [w0, W, V]))
             logger.debug(f"Epoch: {epoch_count}, batch: {batch} loss:, {loss_.numpy()}")
