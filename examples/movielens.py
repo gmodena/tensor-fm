@@ -4,7 +4,7 @@ from sklearn.feature_extraction import DictVectorizer
 import numpy as np
 
 # Read in data
-def load_data(filename, path="/Users/gmodena/Downloads/ml-100k/"):
+def load_data(filename, path="ml-100k/"):
     data = []
     y = []
     users=set()
