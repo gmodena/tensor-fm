@@ -23,7 +23,7 @@ Tensorlow and scikit-learn APIs are provided.
 ### Tensorflow 
 
 The tensorflow implementation of Factorization Machines lives under `tensor-fm/tensorfm/base.py`.
-And example of how to work with this API can be found in `tensor-fm/tests/test_base.py`. 
+An example of how to work with this API can be found in `tensor-fm/tests/test_base.py`. 
 
 ### Scikit-learn estimator
 `tensorfm.sklearn` exposes two sklearn compatible estimators: `FactorizationMachineRegressor`
