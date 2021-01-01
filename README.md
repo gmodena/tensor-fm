@@ -2,7 +2,7 @@
 
 # tensor-fm
 
-A sklearn compatible order 2 Factorization Machine, implemented atop TensorFlow 2.
+A scikit-learn compatible order 2 Factorization Machine, implemented atop TensorFlow 2.
 The algorithm is described in http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf. For an higher level
 overview of the method see http://nowave.it/factorization-machines-with-tensorflow.html.
 
@@ -12,11 +12,13 @@ TF2 backends.
 
 ## Install
 
+The latest development version of `tensorfm` can be installed from its
+[github repo](git+https://github.com/gmodena/tensor-f) with:
 ```
 pip install git+https://github.com/gmodena/tensor-fm
 ```
 
-## Use
+## Usage examples
 
 Tensorlow and scikit-learn APIs are provided.
 
@@ -40,12 +42,6 @@ fm.predict(X)
 
 See also `examples/movielens.py`
 
-## Limitations and known issues
-
-Operations on sparse matrices are currently not supported.
-Training continues till `max_iter` is reached, we should stop if performance does not improve for a certain number
-of iterations.
-
 ## Performance
 
 All parameters and settings being equal, I noticed a considerable performance degradation of
@@ -53,3 +49,10 @@ All parameters and settings being equal, I noticed a considerable performance de
 from http://nowave.it/factorization-machines-with-tensorflow.html.
 Possibly related, a test in the `check_regressors_train` suite (`sklearn`) fails due to a low `R^2`. As a workaround
 `FactorizationMachineRegressor` sets the `poor_score` tag to `True`.
+
+## Limitations and known issues
+
+Operations on sparse matrices are currently not supported.
+Training continues till `max_iter` is reached, we should stop if performance does not improve for a certain number
+of iterations.
+
