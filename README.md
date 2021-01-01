@@ -1,4 +1,5 @@
 ![](https://github.com/gmodena/tensor-fm/workflows/build/badge.svg)
+[![Documentation Status](https://readthedocs.org/projects/tensor-fm/badge/?version=latest)](https://tensor-fm.readthedocs.io/en/latest/?badge=latest)
 
 # tensor-fm
 
