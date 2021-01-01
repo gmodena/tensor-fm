@@ -1,6 +1,5 @@
 """
-Custom scikit-learn estimators for supervised learning with Factorization Machines
-
+scikit-learn compatible estimators that implement supervised learning with Factorization Machines
 """
 from .base import train, fm
 from .base import l2_norm, l1_norm, noop_norm
@@ -26,6 +25,16 @@ import tensorflow as tf
 
 
 class BaseFactorizationMachine(BaseEstimator):
+    """A base class for factorization machines.
+
+    :param n_factors: number of latent factor vectors.
+    :param max_iter: iterations to convergence.
+    :param eta: learning rate for adaptive optimizer.
+    :param penalty: regularization (l1, l2 or None). Default l2.
+    :param C: inverse of regularization strength.
+    :param batch_size: training batch size.
+    :param random_state: int, random state.
+    """
     def __init__(
         self,
         n_factors=2,
@@ -36,16 +45,6 @@ class BaseFactorizationMachine(BaseEstimator):
         batch_size=TF_DATASET_BATCH_SIZE,
         random_state=None,
     ):
-        """A base class for factorization machines
-
-        :param n_factors: number of latent factor vectors
-        :param max_iter: iterations to convergence
-        :param eta: learning rate for adaptive optimizer.
-        :param penalty: regularization (l1, l2 or None). Default l2.
-        :param C: inverse of regularization strength
-        :param batch_size: training batch size
-        :param random_state: int, random state
-        """
         self.n_factors = n_factors
         self.max_iter = max_iter
         if penalty and penalty not in ("l1", "l2"):
@@ -62,6 +61,16 @@ class BaseFactorizationMachine(BaseEstimator):
 
 
 class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
+    """A factorization machine regressor, trained by minimising MSE.
+
+    :param n_factors: number of latent factor vectors.
+    :param max_iter: iterations to convergence.
+    :param eta: learning rate for adaptive optimizer.
+    :param penalty: regularization (l1, l2 or None). Default l2.
+    :param C: inverse of regularization strength.
+    :param batch_size: training batch size.
+    :param random_state: int, random state.
+    """
     def __init__(
         self,
         n_factors=2,
@@ -84,13 +93,13 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         self.loss = MSE
 
     def fit(self, X, y):
-        """Fit a factorization machine regressor
+        """Fit a factorization machine regressor.
 
         Internally, X and y are converted to a Tensorflow Dataset with types (float32, float32)
 
         :param X: {array-like} of shape (n_samples, n_features)
             Training data.
-        :param y: array-like of shape (n_samples,) or (n_samples, n_targets)
+        :param y: {array-like} of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         :return: an instance of self.
         """
@@ -112,12 +121,12 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
         return self
 
     def predict(self, X):
-        """Predict using a factorization machine model
+        """Predict using a factorization machine model.
 
         :param X: array-like , shape (n_samples, n_features).
                     The input samples. Internally, it will be converted to a float32 Tensor
-                    with shape (n_samples, n_features)
-        :return y: array, shape (n_samples,)
+                    with shape (n_samples, n_features).
+        :return y: array, shape (n_samples,).
         """
         check_is_fitted(self)
         X = utils.check_array(X)
@@ -136,6 +145,17 @@ class FactorizationMachineRegressor(BaseFactorizationMachine, RegressorMixin):
 
 
 class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
+    """A factorization machine regressor, trained by minimising
+    binary cross-entropy.
+
+    :param n_factors: number of latent factor vectors.
+    :param max_iter: iterations to convergence.
+    :param eta: learning rate for adaptive optimizer.
+    :param penalty: regularization (l1, l2 or None). Default l2.
+    :param C: inverse of regularization strength.
+    :param batch_size: training batch size.
+    :param random_state: int, random state.
+    """
     def __init__(
         self,
         n_factors=2,
@@ -158,15 +178,15 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
         self.loss = partial(binary_crossentropy, from_logits=True)
 
     def fit(self, X, y):
-        """Fit a factorization machine binary classifier
+        """Fit a factorization machine binary classifier.
 
-            Internally, X and y are converted to to Dataset with types (float32, float32)
+            Internally, X and y are converted to to Dataset with types (float32, float32).
 
             :param X: {array-like} of shape (n_samples, n_features)
                 Training data.
-            :param y: array-like of shape (n_samples,) or (n_samples, n_targets)
+            :param y: {array-like} of shape (n_samples,) or (n_samples, n_targets)
                 Target values.
-            :return: an instance of self
+            :return: an instance of self.
         """
         X, y = utils.check_X_y(X, y, estimator=self, dtype=FLOAT_DTYPES)
         column_or_1d(y)
@@ -199,13 +219,13 @@ class FactorizationMachineClassifier(BaseFactorizationMachine, ClassifierMixin):
         return pred
 
     def predict(self, X, threshold=0.5):
-        """Predict using a factorization machine model
+        """Predict using a factorization machine model.
 
         :param X: array-like, shape (n_samples, n_features).
                     The input samples. Internally, it will be converted to a float32 Tensor
-                    with shape (n_samples, n_features)
-        :param threshold: decision boundary between classes
-        :return y: array, shape (n_samples,)
+                    with shape (n_samples, n_features).
+        :param threshold: decision boundary between classes.
+        :return y: array, shape (n_samples,).
         """
         pred = self._predict(X).numpy() > threshold
 
