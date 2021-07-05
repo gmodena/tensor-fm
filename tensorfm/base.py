@@ -48,22 +48,21 @@ def train(
     random_state=None,
     dtype=tf.float32,
 ):
-    """Fit a degree 2 polynomial factorization machine, implemented atop tensorflow 2.
-       This class contains the generic code to train a Factorazione Machine . Regressors and classifiers can be learnt
-       by minimizing appropriate loss functions (e.g. MSE or cross entropy).
+    """Fit a degree 2 polynomial factorization machine, implemented atop Tensorflow 2.
+    This class contains the generic code to train a Factorazione Machine. Regressors and classifiers can be learnt
+    by minimizing appropriate loss functions (e.g. MSE or cross entropy).
 
-       :param train_dataset: an instance of tensorflow.data.Dataset that contains training data.
-       :param num_factors: number of latent factor vectors.
-       :param max_iter: iterations to convergence.
-       :param penalty: regularization (l1, l2 or None). Default l2.
-       :param C: inverse of regularization strength.
-       :param loss: a tensorflow.keras.losses object (e.g. MSE, binary_crossentropy).
-       :param optimizer: a tensorflow.keras.optimizers object (e.g. tf.keras.optimizers.Adam).
-       :param random_state: int, random state.
-       :param dtype: train_dataset types. Default float32.
-
-       :returns w0, W, V: `tensorflow.Variable`s for bias, weights and interaction factors.
-       """
+    :param train_dataset: an instance of tensorflow.data.Dataset that contains training data.
+    :param num_factors: number of latent factor vectors.
+    :param max_iter: iterations to convergence.
+    :param penalty: regularization (l1, l2 or None). Default l2.
+    :param C: inverse of regularization strength.
+    :param loss: a tensorflow.keras.losses object (e.g. MSE, binary_crossentropy).
+    :param optimizer: a tensorflow.keras.optimizers object (e.g. tf.keras.optimizers.Adam).
+    :param random_state: int, random state.
+    :param dtype: train_dataset types. Default float32.
+    :returns w0, W, V: tensorflow.Variable instances for bias, weights and interaction factors.
+    """
     tf.random.set_seed(random_state)
     if C < 0:
         raise ValueError(f"Inverse regularization term must be positive; got (C={C})")
