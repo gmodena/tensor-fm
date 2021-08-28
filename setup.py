@@ -5,7 +5,7 @@ TESTS_REQUIRE = ['pytest==5.2.2']
 
 setup(
     name='TensorFM',
-    version='1.0.0',
+    version='1.0.4',
     author='Gabriele Modena',
     author_email='gm@nowave.it',
     packages=find_packages(),
